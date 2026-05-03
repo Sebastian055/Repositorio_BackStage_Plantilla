@@ -1,7 +1,13 @@
+import React from 'react';
 import { createApp } from '@backstage/frontend-defaults';
-import catalogPlugin from '@backstage/plugin-catalog/alpha';
-import { navModule } from './modules/nav';
+import { IntegracionesPage } from './components/integraciones/IntegracionesPage';
 
-export default createApp({
-  features: [catalogPlugin, navModule],
+// Crear la app (sin usar .createRoot aquí)
+const app = createApp({
+  features: [], // Sin plugins para que no salga el catálogo
 });
+
+// Exportar un COMPONENTE React, NO el elemento
+export default function App() {
+  return <IntegracionesPage />;
+}
