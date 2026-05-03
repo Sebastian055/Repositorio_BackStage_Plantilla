@@ -58,11 +58,13 @@ interface FormData {
   estado: string;
 }
 
+interface RegistroIntegracionProps {
+  onRegistroExitoso?: () => void;
+}
+
 export const RegistroIntegracion = ({
   onRegistroExitoso,
-}: {
-  onRegistroExitoso?: () => void;
-}) => {
+}: RegistroIntegracionProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
@@ -122,6 +124,7 @@ export const RegistroIntegracion = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✅ ESTE ES EL handleSubmit CORRECTO (dentro del componente)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -132,8 +135,24 @@ export const RegistroIntegracion = ({
     setLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Integración registrada:', formData);
+      const response = await fetch(
+        'http://localhost:7007/api/integraciones/integraciones',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al registrar');
+      }
+
+      const result = await response.json();
+      console.log('Integración registrada:', result);
       setExito(true);
 
       setFormData({
@@ -161,7 +180,9 @@ export const RegistroIntegracion = ({
 
   const handleChange = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   return (
@@ -185,7 +206,6 @@ export const RegistroIntegracion = ({
           )}
 
           <Grid container spacing={3}>
-            {/* Identificador */}
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -200,7 +220,6 @@ export const RegistroIntegracion = ({
               />
             </Grid>
 
-            {/* Aplicaciones involucradas - usando Select con Chip */}
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth error={!!errors.aplicacionesInvolucradas}>
                 <InputLabel>Aplicaciones involucradas *</InputLabel>
@@ -233,7 +252,6 @@ export const RegistroIntegracion = ({
               </FormControl>
             </Grid>
 
-            {/* Componente emisor */}
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -246,7 +264,6 @@ export const RegistroIntegracion = ({
               />
             </Grid>
 
-            {/* Componente receptor */}
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -261,7 +278,6 @@ export const RegistroIntegracion = ({
               />
             </Grid>
 
-            {/* Namespace */}
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -276,7 +292,6 @@ export const RegistroIntegracion = ({
               />
             </Grid>
 
-            {/* Tipo interfaz */}
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -296,7 +311,6 @@ export const RegistroIntegracion = ({
               </TextField>
             </Grid>
 
-            {/* Protocolo */}
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -318,7 +332,6 @@ export const RegistroIntegracion = ({
               </TextField>
             </Grid>
 
-            {/* Criticidad */}
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -335,7 +348,6 @@ export const RegistroIntegracion = ({
               </TextField>
             </Grid>
 
-            {/* Responsable */}
             <Grid size={{ xs: 12, md: 8 }}>
               <TextField
                 fullWidth
@@ -348,7 +360,6 @@ export const RegistroIntegracion = ({
               />
             </Grid>
 
-            {/* Descripción */}
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -360,7 +371,6 @@ export const RegistroIntegracion = ({
               />
             </Grid>
 
-            {/* URL documentación */}
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -372,7 +382,6 @@ export const RegistroIntegracion = ({
               />
             </Grid>
 
-            {/* Estado */}
             <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 fullWidth
@@ -390,7 +399,6 @@ export const RegistroIntegracion = ({
             </Grid>
           </Grid>
 
-          {/* Botones */}
           <Box
             sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
           >
@@ -425,3 +433,5 @@ export const RegistroIntegracion = ({
     </Card>
   );
 };
+
+export default RegistroIntegracion;

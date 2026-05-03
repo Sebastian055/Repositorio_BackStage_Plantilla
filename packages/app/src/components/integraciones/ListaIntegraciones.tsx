@@ -29,47 +29,31 @@ interface Integracion {
 
 export const ListaIntegraciones = () => {
   const [integraciones, setIntegraciones] = useState<Integracion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const mockData: Integracion[] = [
-      {
-        id: '1',
-        identificadorEscenario: 'INT-SAP-SALESFORCE-001',
-        aplicacionesInvolucradas: ['SAP', 'Salesforce'],
-        componenteEmisor: 'SAP ECC',
-        componenteReceptor: 'Salesforce Cloud',
-        protocoloComunicacion: 'REST',
-        responsable: 'Equipo SAP',
-        criticidad: 'Alta',
-        estado: 'Activo',
-        fechaRegistro: '2026-01-15',
-      },
-      {
-        id: '2',
-        identificadorEscenario: 'INT-MAINFRAME-ORACLE-002',
-        aplicacionesInvolucradas: ['Mainframe', 'Oracle'],
-        componenteEmisor: 'Mainframe Z/OS',
-        componenteReceptor: 'Oracle DB',
-        protocoloComunicacion: 'SOAP',
-        responsable: 'Juan Pérez',
-        criticidad: 'Media',
-        estado: 'Activo',
-        fechaRegistro: '2026-02-01',
-      },
-      {
-        id: '3',
-        identificadorEscenario: 'INT-SUMMACORE-KAFKA-003',
-        aplicacionesInvolucradas: ['SummaCore', 'Kafka'],
-        componenteEmisor: 'SummaCore API',
-        componenteReceptor: 'Kafka Broker',
-        protocoloComunicacion: 'Kafka',
-        responsable: 'Equipo Arquitectura',
-        criticidad: 'Alta',
-        estado: 'En desarrollo',
-        fechaRegistro: '2026-02-20',
-      },
-    ];
-    setIntegraciones(mockData);
+    const fetchIntegraciones = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          'http://localhost:7007/api/integraciones/integraciones',
+        );
+        if (!response.ok) throw new Error('Error al cargar');
+        const data = await response.json();
+        setIntegraciones(data);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err
+            : new Error('Error al cargar integraciones'),
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIntegraciones();
   }, []);
 
   const getCriticidadColor = (criticidad: string) => {
@@ -82,6 +66,10 @@ export const ListaIntegraciones = () => {
         return '#2e7d32';
     }
   };
+
+  if (loading) return <Typography>Cargando...</Typography>;
+  if (error)
+    return <Typography color="error">Error: {error.message}</Typography>;
 
   return (
     <Card>
@@ -112,7 +100,7 @@ export const ListaIntegraciones = () => {
                 <TableRow key={row.id}>
                   <TableCell>{row.identificadorEscenario}</TableCell>
                   <TableCell>
-                    {row.aplicacionesInvolucradas.map(a => (
+                    {row.aplicacionesInvolucradas?.map(a => (
                       <Chip key={a} label={a} size="small" sx={{ mr: 0.5 }} />
                     ))}
                   </TableCell>
