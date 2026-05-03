@@ -124,7 +124,6 @@ export const RegistroIntegracion = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ ESTE ES EL handleSubmit CORRECTO (dentro del componente)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -136,7 +135,7 @@ export const RegistroIntegracion = ({
 
     try {
       const response = await fetch(
-        'http://localhost:7007/api/integraciones/integraciones',
+        'http://localhost:7008/api/integraciones/integraciones',
         {
           method: 'POST',
           headers: {
@@ -148,6 +147,15 @@ export const RegistroIntegracion = ({
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Manejar error 409 (conflicto - llave duplicada)
+        if (response.status === 409) {
+          throw new Error(
+            errorData.error ||
+              'Ya existe una integración con este identificador',
+          );
+        }
+
         throw new Error(errorData.error || 'Error al registrar');
       }
 
