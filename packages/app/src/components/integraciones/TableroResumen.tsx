@@ -33,21 +33,15 @@ export const TableroResumen = () => {
         const response = await fetch(
           'http://localhost:7008/api/integraciones/integraciones/stats/resumen',
         );
-
-        if (!response.ok) {
-          throw new Error('Error al cargar estadísticas');
-        }
-
+        if (!response.ok) throw new Error('Error al cargar estadísticas');
         const data = await response.json();
         setResumen(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar');
-        console.error('Error:', err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchResumen();
   }, []);
 
@@ -77,6 +71,7 @@ export const TableroResumen = () => {
 
   return (
     <>
+      {/* Tarjetas de métricas */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card sx={{ textAlign: 'center', p: 2 }}>
@@ -120,16 +115,19 @@ export const TableroResumen = () => {
             <Typography sx={{ fontSize: '2.5rem', fontWeight: 'bold' }}>
               {resumen.responsablesUnicos}
             </Typography>
-            <Typography sx={{ color: '#666', mt: 1 }}>Responsables</Typography>
+            <Typography sx={{ color: '#666', mt: 1 }}>
+              Responsables únicos
+            </Typography>
           </Card>
         </Grid>
       </Grid>
 
+      {/* Protocolos disponibles */}
       <Box sx={{ mt: 4 }}>
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Protocolos utilizados
+              Protocolos utilizados en el sistema
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {resumen.protocolosUsados &&

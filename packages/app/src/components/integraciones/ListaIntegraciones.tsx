@@ -25,9 +25,12 @@ import {
   InputLabel,
   Select,
   OutlinedInput,
+  InputAdornment,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface Integracion {
   id: number;
@@ -81,13 +84,17 @@ export const ListaIntegraciones = () => {
   const [selectedIntegracion, setSelectedIntegracion] =
     useState<Integracion | null>(null);
   const [editFormData, setEditFormData] = useState<any>({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchIntegraciones = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        'http://localhost:7008/api/integraciones/integraciones',
-      );
+      const url = searchTerm
+        ? `http://localhost:7008/api/integraciones/integraciones?search=${encodeURIComponent(
+            searchTerm,
+          )}`
+        : 'http://localhost:7008/api/integraciones/integraciones';
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Error al cargar');
       const data = await response.json();
       setIntegraciones(data);
@@ -102,7 +109,7 @@ export const ListaIntegraciones = () => {
 
   useEffect(() => {
     fetchIntegraciones();
-  }, []);
+  }, [searchTerm]);
 
   const handleEditClick = (integracion: Integracion) => {
     setSelectedIntegracion(integracion);
@@ -168,6 +175,59 @@ export const ListaIntegraciones = () => {
     }
   };
 
+  // EXPORTAR A CSV (no necesita librerías externas)
+  const exportarACSV = () => {
+    const headers = [
+      'Identificador',
+      'Aplicaciones',
+      'Componente Emisor',
+      'Componente Receptor',
+      'Namespace',
+      'Tipo Interfaz',
+      'Protocolo',
+      'Criticidad',
+      'Responsable',
+      'Estado',
+      'Fecha Registro',
+      'URL Documentación',
+      'Descripción',
+    ];
+
+    const rows = integraciones.map(row => [
+      `"${row.identificador_escenario}"`,
+      `"${row.aplicaciones_involucradas?.join(', ') || ''}"`,
+      `"${row.componente_emisor}"`,
+      `"${row.componente_receptor}"`,
+      `"${row.namespace_interfaz}"`,
+      `"${row.tipo_interfaz}"`,
+      `"${row.protocolo_comunicacion}"`,
+      `"${row.criticidad}"`,
+      `"${row.responsable}"`,
+      `"${row.estado}"`,
+      `"${new Date(row.fecha_registro).toLocaleDateString()}"`,
+      `"${row.documentacion_soporte || ''}"`,
+      `"${row.descripcion_flujo || ''}"`,
+    ]);
+
+    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+
+    // Agregar BOM para que funcione con caracteres especiales en español (ñ, tildes)
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `integraciones_${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const getCriticidadColor = (criticidad: string) => {
     switch (criticidad) {
       case 'Alta':
@@ -186,12 +246,50 @@ export const ListaIntegraciones = () => {
     <>
       <Card>
         <CardContent>
-          <Typography variant="h5" gutterBottom>
-            Inventario de integraciones
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Total: {integraciones.length} registros
-          </Typography>
+          {/* HEADER CON BOTÓN DE EXPORTAR */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Box>
+              <Typography variant="h5">Inventario de integraciones</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total: {integraciones.length} registros
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={exportarACSV}
+              size="medium"
+            >
+              Exportar a CSV
+            </Button>
+          </Box>
+
+          {/* BARRA DE BÚSQUEDA */}
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Buscar por identificador..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Box>
 
           <TableContainer component={Paper}>
             <Table>
